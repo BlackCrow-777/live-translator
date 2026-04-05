@@ -15,116 +15,83 @@
     display: flex;
     align-items: flex-end;
     justify-content: flex-start;
-    padding: 16px;
+    padding: 16px 20px;
     overflow: hidden;
-  }
-
-  #wrapper {
-    position: relative;
-    display: inline-block;
-    max-width: 100%;
-  }
-
-  /* Bunny ears sitting above the text box */
-  #ears {
-    display: none;
-    position: absolute;
-    top: -42px;
-    left: 10px;
-    font-size: 2.2em;
-    line-height: 1;
-    filter: drop-shadow(0 2px 6px rgba(150,80,220,0.35));
-    animation: earWiggle 2.5s ease-in-out infinite;
-    transform-origin: bottom center;
-  }
-
-  @keyframes earWiggle {
-    0%, 100% { transform: rotate(-5deg) scale(1); }
-    25%       { transform: rotate(5deg) scale(1.05); }
-    75%       { transform: rotate(-3deg) scale(0.97); }
-  }
-
-  /* Floating paw prints around the box */
-  #paws {
-    display: none;
-    position: absolute;
-    inset: -18px;
-    pointer-events: none;
-  }
-  .paw {
-    position: absolute;
-    font-size: 1em;
-    opacity: 0;
-    animation: floatPaw 4s ease-in-out infinite;
-  }
-  .paw:nth-child(1) { top: -10px; right: 10px;  animation-delay: 0s;    font-size: 0.85em; }
-  .paw:nth-child(2) { bottom: -8px; left: 8px;  animation-delay: 1s;    font-size: 0.7em;  }
-  .paw:nth-child(3) { top: 30%;  right: -14px;  animation-delay: 2s;    font-size: 0.75em; }
-  .paw:nth-child(4) { bottom: 20%; left: -12px; animation-delay: 0.5s;  font-size: 0.8em;  }
-
-  @keyframes floatPaw {
-    0%   { opacity: 0;    transform: translateY(0)   rotate(0deg);   }
-    20%  { opacity: 0.75; }
-    60%  { opacity: 0.5;  transform: translateY(-8px) rotate(15deg); }
-    100% { opacity: 0;    transform: translateY(-14px) rotate(30deg);}
-  }
-
-  #text-box {
-    background: rgba(210, 180, 255, 0.85); /* lavender purple */
-    border: 3px solid #c49eff;
-    border-radius: 22px 22px 22px 5px;
-    padding: 12px 20px 12px 16px;
-    backdrop-filter: blur(6px);
-    box-shadow: 0 4px 24px rgba(160, 100, 255, 0.3),
-                inset 0 1px 0 rgba(255,255,255,0.55);
-    max-width: 100%;
-    word-break: break-word;
-    line-height: 1.4;
     font-family: 'Baloo 2', 'Comic Sans MS', cursive;
     font-weight: 800;
   }
 
-  #translated-text {
-    display: block;
-    color: #ecdeff; /* pastel purple / near-white with purple hue */
-    text-shadow:
-      -2px -2px 0 #7c3aed,
-       2px -2px 0 #7c3aed,
-      -2px  2px 0 #7c3aed,
-       2px  2px 0 #7c3aed,
-       0    3px 10px rgba(120,50,220,0.35);
+  #wrapper { position: relative; max-width: 100%; }
+
+  #ears {
+    position: absolute;
+    top: -40px; left: 10px;
+    font-size: 2em;
+    filter: drop-shadow(0 2px 6px rgba(150,80,220,0.4));
+    animation: wiggle 2.5s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-5deg); }
+    50%     { transform: rotate(5deg);  }
   }
 
-  #interim-text {
+  #paws { position: absolute; inset: -16px; pointer-events: none; }
+  .paw  { position: absolute; font-size: 0.8em; opacity: 0; animation: floatup 4s ease-in-out infinite; }
+  .paw:nth-child(1) { top:-8px;    right:12px;  animation-delay:0s;   }
+  .paw:nth-child(2) { bottom:-6px; left:10px;   animation-delay:1.3s; }
+  .paw:nth-child(3) { top:40%;    right:-12px;  animation-delay:2.6s; }
+  .paw:nth-child(4) { bottom:30%; left:-10px;   animation-delay:0.7s; }
+  @keyframes floatup {
+    0%   { opacity:0;   transform:translateY(0) rotate(0deg);      }
+    30%  { opacity:0.7; }
+    100% { opacity:0;   transform:translateY(-16px) rotate(25deg); }
+  }
+
+  #box {
+    background: rgba(210,180,255,0.88);
+    border: 3px solid #c49eff;
+    border-radius: 22px 22px 22px 5px;
+    padding: 12px 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 24px rgba(160,100,255,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
+    max-width: 100%;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+
+  /* Spanish — top, bright */
+  #line-es {
     display: block;
-    color: rgba(236, 222, 255, 0.6);
-    text-shadow:
-      -1px -1px 0 rgba(124,58,237,0.4),
-       1px -1px 0 rgba(124,58,237,0.4),
-      -1px  1px 0 rgba(124,58,237,0.4),
-       1px  1px 0 rgba(124,58,237,0.4);
+    color: #ecdeff;
+    text-shadow: -2px -2px 0 #7c3aed, 2px -2px 0 #7c3aed,
+                 -2px  2px 0 #7c3aed, 2px  2px 0 #7c3aed;
+  }
+
+  #divider {
+    border: none;
+    border-top: 1.5px solid rgba(200,170,255,0.4);
+    margin: 6px 0;
+    display: none;
+  }
+
+  /* Italian — bottom, dim italic, always present while speaking */
+  #line-it {
+    display: block;
+    color: rgba(236,222,255,0.55);
     font-style: italic;
+    text-shadow: -1px -1px 0 rgba(124,58,237,0.35), 1px -1px 0 rgba(124,58,237,0.35),
+                 -1px  1px 0 rgba(124,58,237,0.35), 1px  1px 0 rgba(124,58,237,0.35);
   }
 
-  #text-box.pop {
-    animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes popIn {
-    0%   { transform: scale(0.93); }
-    100% { transform: scale(1); }
-  }
+  #box.pop { animation: popin 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes popin { from { transform:scale(0.95); } to { transform:scale(1); } }
 
   #status {
-    position: fixed;
-    top: 8px;
-    right: 8px;
-    font-size: 11px;
-    font-family: 'Baloo 2', cursive;
-    opacity: 0.6;
-    color: #7c3aed;
-    background: rgba(236,222,255,0.5);
-    padding: 2px 10px;
-    border-radius: 20px;
+    position: fixed; top:8px; right:10px;
+    font-family: 'Baloo 2', cursive; font-size:11px;
+    color:#7c3aed; background:rgba(236,222,255,0.55);
+    padding:2px 10px; border-radius:20px; opacity:0.65;
   }
 </style>
 </head>
@@ -133,168 +100,161 @@
 <div id="wrapper">
   <div id="ears">🐰</div>
   <div id="paws">
-    <span class="paw">🐾</span>
-    <span class="paw">🐾</span>
-    <span class="paw">🐾</span>
-    <span class="paw">🐾</span>
+    <span class="paw">🐾</span><span class="paw">🐾</span>
+    <span class="paw">🐾</span><span class="paw">🐾</span>
   </div>
-  <div id="text-box">
-    <span id="translated-text"></span>
-    <span id="interim-text"></span>
+  <div id="box">
+    <span id="line-es"></span>
+    <hr  id="divider">
+    <span id="line-it"></span>
   </div>
 </div>
-<div id="status">starting... 🌸</div>
+<div id="status">avvio... 🌸</div>
 
 <script>
-// ─── Read URL parameters ───────────────────────────────────────────────────
-const params = new URLSearchParams(window.location.search);
+// ── URL params ──────────────────────────────────────────────────────────────
+const p       = new URLSearchParams(location.search);
+const RECOG   = p.get('recog')   || 'it';
+const TRANS   = p.get('trans')   || 'es';
+const BGCOLOR = p.get('bgcolor') || 'transparent';
+const SIZE    = p.get('size')    || '20';
+const VALIGN  = (p.get('v_align') || 'bottom').replace('_','');
+const GAS_KEY = p.get('gas_key') || '';
 
-const recogLang  = params.get('recog')    || 'it';
-const transLang  = params.get('trans')    || 'es';
-const bgColor    = params.get('bgcolor')  || 'transparent';
-const fontSize   = params.get('size')     || '20';
-const fontWeight = params.get('weight')   || '800';
-const color      = params.get('color')    || 'white';
-const stColor    = params.get('st_color') || 'black';
-const stWidth    = params.get('st_width') || '2';
-const vAlign     = params.get('v_align')  || 'bottom';
-const gasKey     = params.get('gas_key')  || '';
+// ── Pause threshold (ms of silence before translating) ──────────────────────
+// Lower = more reactive. 800ms feels natural for speech.
+const PAUSE_MS = 800;
 
-// ─── Apply styles from URL params ─────────────────────────────────────────
-// Background: transparent in OBS, pink-ish in browser if not set
-if (bgColor && bgColor !== 'transparent') {
-  document.body.style.background = bgColor;
+// ── Apply styles ────────────────────────────────────────────────────────────
+if (BGCOLOR && BGCOLOR !== 'transparent') document.body.style.background = BGCOLOR;
+document.getElementById('box').style.fontSize = SIZE + 'pt';
+if      (VALIGN === 'top')    document.body.style.alignItems = 'flex-start';
+else if (VALIGN === 'center') document.body.style.alignItems = 'center';
+
+// ── DOM ─────────────────────────────────────────────────────────────────────
+const elEs     = document.getElementById('line-es');
+const elIt     = document.getElementById('line-it');
+const elDiv    = document.getElementById('divider');
+const elStatus = document.getElementById('status');
+const elBox    = document.getElementById('box');
+
+// ── State ───────────────────────────────────────────────────────────────────
+//
+// KEY IDEA:
+//   - "italian line" is purely a display of what the mic hears, always live
+//   - "confirmed" is the text already finalised by the browser (not interim)
+//   - when a pause is detected on confirmed text, we send it to translate
+//   - the italian line is NEVER cleared — it just keeps accumulating
+//   - the spanish line updates whenever a translation comes back
+//
+let confirmed  = '';   // text confirmed by browser speech engine
+let pauseTimer = null;
+
+// ── UI helpers ───────────────────────────────────────────────────────────────
+function syncDivider() {
+  elDiv.style.display = (elEs.textContent && elIt.textContent) ? 'block' : 'none';
 }
 
-const textBox = document.getElementById('text-box');
-textBox.style.fontSize   = fontSize + 'pt';
-
-// vertical alignment
-const va = vAlign.replace('_','');
-if (va === 'top') {
-  document.body.style.alignItems = 'flex-start';
-} else if (va === 'center') {
-  document.body.style.alignItems = 'center';
-} else {
-  document.body.style.alignItems = 'flex-end';
+function setIT(text) {
+  elIt.textContent = text;
+  syncDivider();
 }
 
-// ─── State ─────────────────────────────────────────────────────────────────
-const translatedEl = document.getElementById('translated-text');
-const interimEl    = document.getElementById('interim-text');
-const statusEl     = document.getElementById('status');
-const earsEl       = document.getElementById('ears');
-const wrapperEl    = document.getElementById('wrapper');
-
-const pawsEl       = document.getElementById('paws');
-
-function showEars(visible) {
-  earsEl.style.display = visible ? 'block' : 'none';
-  pawsEl.style.display = visible ? 'block' : 'none';
-}
-
-function popTextBox() {
-  textBox.classList.remove('pop');
-  void textBox.offsetWidth; // reflow to restart animation
-  textBox.classList.add('pop');
-}
-
-let pauseTimer      = null;
-const PAUSE_MS      = 1500;   // how long silence before we translate (ms)
-let pendingText     = '';     // accumulated interim text waiting for pause
-let isTranslating   = false;
-
-// ─── Translation via your Google Apps Script ───────────────────────────────
-async function translate(text) {
-  if (!gasKey || !text.trim()) return;
-  isTranslating = true;
-  statusEl.textContent = 'translating... 💕';
-  try {
-    const url = `https://script.google.com/macros/s/${gasKey}/exec`
-              + `?text=${encodeURIComponent(text)}`
-              + `&source=${recogLang}`
-              + `&target=${transLang}`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    if (data.translatedText) {
-      translatedEl.textContent = data.translatedText;
-      interimEl.textContent    = '';
-      showEars(true);
-      popTextBox();
-    }
-  } catch (e) {
-    statusEl.textContent = 'error 🌸';
+function setES(text) {
+  elEs.textContent = text;
+  syncDivider();
+  if (text) {
+    elBox.classList.remove('pop');
+    void elBox.offsetWidth;
+    elBox.classList.add('pop');
   }
-  isTranslating = false;
-  statusEl.textContent = 'listening... 🐰';
 }
 
-// ─── Schedule a translation after silence ─────────────────────────────────
-function schedulePauseTranslation(text) {
-  clearTimeout(pauseTimer);
-  pauseTimer = setTimeout(() => {
-    if (text.trim()) {
-      translate(text);
-      pendingText = '';
+// ── Translation — always fire & forget ──────────────────────────────────────
+// We only translate "confirmed" text (final words from browser).
+// Multiple translations can run in parallel — last one to arrive wins,
+// which is fine because they're sequential chunks of speech.
+async function translate(text) {
+  if (!GAS_KEY || !text.trim()) return;
+  elStatus.textContent = 'traducendo... 💕';
+  try {
+    const url = `https://script.google.com/macros/s/${GAS_KEY}/exec`
+              + `?text=${encodeURIComponent(text)}`
+              + `&source=${RECOG}&target=${TRANS}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.translatedText) {
+      // Clear old spanish first, then show new translation
+      setES('');
+      setTimeout(() => setES(d.translatedText), 50);
     }
+  } catch (_) { /* silent fail */ }
+  elStatus.textContent = 'ascolto... 🐰';
+}
+
+// ── Pause detection ─────────────────────────────────────────────────────────
+// Every time new confirmed text arrives, reset the pause timer.
+// When the timer fires, it means the speaker has paused → translate.
+function onNewConfirmed() {
+  clearTimeout(pauseTimer);
+  if (!confirmed.trim()) return;
+  pauseTimer = setTimeout(() => {
+    translate(confirmed);
+    confirmed = ''; // reset confirmed so next chunk starts fresh
   }, PAUSE_MS);
 }
 
-// ─── Speech Recognition ───────────────────────────────────────────────────
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// ── Speech Recognition ────────────────────────────────────────────────────────
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-if (!SpeechRecognition) {
-  statusEl.textContent = 'Speech API not supported — use Chrome 🌸';
+if (!SR) {
+  elStatus.textContent = 'Usa Chrome! 🌸';
 } else {
-  const recog = new SpeechRecognition();
-  recog.lang              = recogLang;
-  recog.continuous        = true;
-  recog.interimResults    = true;
-  recog.maxAlternatives   = 1;
+  const rec = new SR();
+  rec.lang            = RECOG;
+  rec.continuous      = true;
+  rec.interimResults  = true;
+  rec.maxAlternatives = 1;
 
-  recog.onstart = () => {
-    statusEl.textContent = 'listening... 🐰';
-  };
+  rec.onstart = () => { elStatus.textContent = 'ascolto... 🐰'; };
 
-  recog.onresult = (event) => {
-    let interimTranscript = '';
-    let finalTranscript   = '';
+  rec.onresult = (e) => {
+    let final = '', interim = '';
 
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript;
-      } else {
-        interimTranscript += transcript;
-      }
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final   += t;
+      else                      interim += t;
     }
 
-    if (finalTranscript) {
-      pendingText += ' ' + finalTranscript;
-      pendingText = pendingText.trim();
-      interimEl.textContent = pendingText;
-      showEars(true);
-      schedulePauseTranslation(pendingText);
-    } else if (interimTranscript) {
-      interimEl.textContent = pendingText + ' ' + interimTranscript;
-      showEars(true);
-      schedulePauseTranslation(pendingText + ' ' + interimTranscript);
+    // Add confirmed words to buffer
+    if (final) {
+      confirmed = (confirmed + ' ' + final).trim();
+      onNewConfirmed(); // reset pause timer
     }
+
+    // Italian line = confirmed + whatever interim is happening right now
+    // This makes it feel perfectly live and never empty while speaking
+    const display = interim
+      ? (confirmed + ' ' + interim).trim()
+      : confirmed;
+
+    setIT(display);
   };
 
-  recog.onerror = (e) => {
-    statusEl.textContent = 'error: ' + e.error + ' 🌸';
+  rec.onerror = (e) => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
     if (e.error !== 'not-allowed') {
-      setTimeout(() => recog.start(), 2000);
+      setTimeout(() => { try { rec.start(); } catch(_){} }, 1500);
     }
   };
 
-  recog.onend = () => {
-    statusEl.textContent = 'restarting... 🌸';
-    setTimeout(() => recog.start(), 500);
+  // Always restart — mic never stops for any reason
+  rec.onend = () => {
+    setTimeout(() => { try { rec.start(); } catch(_){} }, 200);
   };
 
-  recog.start();
+  rec.start();
 }
 </script>
 </body>
