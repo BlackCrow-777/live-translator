@@ -60,12 +60,12 @@
     line-height: 1.45;
   }
 
-  /* Spanish line — bright */
   #line-es {
     display: block;
     color: #ecdeff;
     text-shadow: -2px -2px 0 #7c3aed, 2px -2px 0 #7c3aed,
                  -2px  2px 0 #7c3aed, 2px  2px 0 #7c3aed;
+    min-height: 0;
   }
 
   #divider {
@@ -75,13 +75,13 @@
     display: none;
   }
 
-  /* Italian line — dim italic */
   #line-it {
     display: block;
     color: rgba(236,222,255,0.55);
     font-style: italic;
     text-shadow: -1px -1px 0 rgba(124,58,237,0.35), 1px -1px 0 rgba(124,58,237,0.35),
                  -1px  1px 0 rgba(124,58,237,0.35), 1px  1px 0 rgba(124,58,237,0.35);
+    min-height: 0;
   }
 
   #box.pop { animation: popin 0.3s cubic-bezier(0.34,1.56,0.64,1); }
@@ -139,17 +139,21 @@ const WORD_LIMIT = 17;
 const PAUSE_MS   = 900;
 
 // ── State ───────────────────────────────────────────────────────────────────
-let buffer     = '';    // confirmed words not yet sent to translate
+let buffer     = '';   // confirmed words not yet translated
 let pauseTimer = null;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function wordCount(t) { return t.trim().split(/\s+/).filter(Boolean).length; }
+
+// Returns true if text ends with sentence-ending punctuation
+function endsWithPeriod(t) { return /[.!?…]$/.test(t.trim()); }
 
 function syncDivider() {
   elDiv.style.display = (elEs.textContent && elIt.textContent) ? 'block' : 'none';
 }
 
 function setIT(text) { elIt.textContent = text; syncDivider(); }
+
 function setES(text) {
   elEs.textContent = text;
   syncDivider();
@@ -160,17 +164,11 @@ function setES(text) {
   }
 }
 
-// ── Translation — fully async, NEVER blocks the mic ─────────────────────────
-// We use a simple "last write wins" approach:
-// sendTranslation() fires off a fetch and when it comes back it writes the result.
-// Multiple calls can be in-flight; whichever finishes last wins (that's fine —
-// they're sequential chunks so the latest is always the most recent).
-
+// ── Translation — fire & forget, mic never blocked ───────────────────────────
 async function sendTranslation(text) {
   if (!GAS_KEY || !text.trim()) return;
   elStatus.textContent = 'traducendo... 💕';
-  // Clear spanish immediately so old text doesn't linger
-  setES('');
+  setES(''); // clear old spanish immediately
   try {
     const url = `https://script.google.com/macros/s/${GAS_KEY}/exec`
               + `?text=${encodeURIComponent(text)}`
@@ -178,24 +176,25 @@ async function sendTranslation(text) {
     const r = await fetch(url);
     const d = await r.json();
     if (d.translatedText) setES(d.translatedText);
-  } catch (_) { /* silent fail */ }
+  } catch (_) { /* silent */ }
   elStatus.textContent = 'ascolto... 🐰';
 }
 
-// ── Called when we want to translate the current buffer ─────────────────────
-function flushBuffer(textToTranslate) {
+// ── Flush: translate current buffer, reset italian, keep mic running ──────────
+function flushBuffer(textToTranslate, clearES) {
   clearTimeout(pauseTimer);
-  buffer = '';          // reset buffer immediately so new words start fresh
-  setIT('');            // clear italian immediately
-  sendTranslation(textToTranslate); // fire & forget — mic keeps running
+  buffer = '';
+  setIT(''); // clear italian immediately — will refill as speech continues
+  if (clearES) setES(''); // full reset on period
+  sendTranslation(textToTranslate); // async, doesn't block anything
 }
 
 function schedulePause(text) {
   clearTimeout(pauseTimer);
-  pauseTimer = setTimeout(() => flushBuffer(text), PAUSE_MS);
+  pauseTimer = setTimeout(() => flushBuffer(text, false), PAUSE_MS);
 }
 
-// ── Speech Recognition — always running ──────────────────────────────────────
+// ── Speech Recognition ────────────────────────────────────────────────────────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SR) {
@@ -217,25 +216,31 @@ if (!SR) {
       else                      interim += t;
     }
 
-    // ── Confirmed words → add to buffer ──────────────────────────────────
+    // ── Confirmed words ───────────────────────────────────────────────────
     if (final) {
       buffer = (buffer + ' ' + final).trim();
 
-      if (wordCount(buffer) >= WORD_LIMIT) {
-        // Hit the limit → translate & reset immediately, mic keeps going
-        flushBuffer(buffer);
-      } else {
-        setIT(buffer);
-        schedulePause(buffer);
+      // Period detected → translate and wipe everything clean
+      if (endsWithPeriod(buffer)) {
+        flushBuffer(buffer, true);
+        return;
       }
+
+      // Word limit hit → translate, reset italian, keep listening
+      if (wordCount(buffer) >= WORD_LIMIT) {
+        flushBuffer(buffer, false);
+        return;
+      }
+
+      // Normal: show in italian and wait for more
+      setIT(buffer);
+      schedulePause(buffer);
     }
 
-    // ── Live preview (not confirmed yet) ─────────────────────────────────
+    // ── Live interim preview ──────────────────────────────────────────────
+    // Always show, so italian line is never empty while speaking
     if (interim) {
-      const preview = (buffer + ' ' + interim).trim();
-      setIT(preview);
-      // if preview already hits limit, schedule translate on confirmed words
-      // (we don't flush on interim to avoid cutting mid-word)
+      setIT((buffer + ' ' + interim).trim());
     }
   };
 
@@ -246,7 +251,7 @@ if (!SR) {
     }
   };
 
-  // Always restart — this is the key to never stopping
+  // Always restart — mic never stops
   rec.onend = () => {
     setTimeout(() => { try { rec.start(); } catch(_){} }, 200);
   };
