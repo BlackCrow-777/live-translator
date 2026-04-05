@@ -200,9 +200,14 @@ function popTextBox() {
 }
 
 let pauseTimer      = null;
-const PAUSE_MS      = 1500;   // how long silence before we translate (ms)
-let pendingText     = '';     // accumulated interim text waiting for pause
+const PAUSE_MS      = 800;    // silence delay before translating (ms)
+const WORD_LIMIT    = 17;     // translate automatically after this many words
+let pendingText     = '';     // accumulated final text waiting for pause
 let isTranslating   = false;
+
+function wordCount(text) {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
 
 // ─── Translation via your Google Apps Script ───────────────────────────────
 async function translate(text) {
@@ -229,13 +234,19 @@ async function translate(text) {
   statusEl.textContent = 'listening... 🐰';
 }
 
+// ─── Trigger translation and reset pending buffer ──────────────────────────
+function flushTranslation(text) {
+  clearTimeout(pauseTimer);
+  pendingText = '';
+  translate(text);
+}
+
 // ─── Schedule a translation after silence ─────────────────────────────────
 function schedulePauseTranslation(text) {
   clearTimeout(pauseTimer);
   pauseTimer = setTimeout(() => {
     if (text.trim()) {
-      translate(text);
-      pendingText = '';
+      flushTranslation(text);
     }
   }, PAUSE_MS);
 }
@@ -272,13 +283,29 @@ if (!SpeechRecognition) {
     if (finalTranscript) {
       pendingText += ' ' + finalTranscript;
       pendingText = pendingText.trim();
+
+      // if word limit reached, translate immediately and reset
+      if (wordCount(pendingText) >= WORD_LIMIT) {
+        interimEl.textContent = '';
+        flushTranslation(pendingText);
+        return;
+      }
+
       interimEl.textContent = pendingText;
       showEars(true);
       schedulePauseTranslation(pendingText);
     } else if (interimTranscript) {
-      interimEl.textContent = pendingText + ' ' + interimTranscript;
+      const combined = (pendingText + ' ' + interimTranscript).trim();
+      interimEl.textContent = combined;
       showEars(true);
-      schedulePauseTranslation(pendingText + ' ' + interimTranscript);
+
+      // also trigger early if interim already hits word limit
+      if (wordCount(combined) >= WORD_LIMIT) {
+        flushTranslation(combined);
+        return;
+      }
+
+      schedulePauseTranslation(combined);
     }
   };
 
