@@ -86,13 +86,20 @@
 
   #translated-text {
     display: block;
-    color: #ecdeff; /* pastel purple / near-white with purple hue */
+    color: #ecdeff;
     text-shadow:
       -2px -2px 0 #7c3aed,
        2px -2px 0 #7c3aed,
       -2px  2px 0 #7c3aed,
        2px  2px 0 #7c3aed,
        0    3px 10px rgba(120,50,220,0.35);
+  }
+
+  #divider {
+    display: none;
+    border: none;
+    border-top: 1.5px solid rgba(200,170,255,0.45);
+    margin: 6px 0;
   }
 
   #interim-text {
@@ -140,6 +147,7 @@
   </div>
   <div id="text-box">
     <span id="translated-text"></span>
+    <hr id="divider">
     <span id="interim-text"></span>
   </div>
 </div>
@@ -182,15 +190,20 @@ if (va === 'top') {
 // ─── State ─────────────────────────────────────────────────────────────────
 const translatedEl = document.getElementById('translated-text');
 const interimEl    = document.getElementById('interim-text');
+const dividerEl    = document.getElementById('divider');
 const statusEl     = document.getElementById('status');
 const earsEl       = document.getElementById('ears');
 const wrapperEl    = document.getElementById('wrapper');
-
 const pawsEl       = document.getElementById('paws');
 
 function showEars(visible) {
   earsEl.style.display = visible ? 'block' : 'none';
   pawsEl.style.display = visible ? 'block' : 'none';
+}
+
+function updateDivider() {
+  const hasBoth = translatedEl.textContent.trim() && interimEl.textContent.trim();
+  dividerEl.style.display = hasBoth ? 'block' : 'none';
 }
 
 function popTextBox() {
@@ -224,6 +237,7 @@ async function translate(text) {
     if (data.translatedText) {
       translatedEl.textContent = data.translatedText;
       interimEl.textContent    = '';
+      updateDivider();
       showEars(true);
       popTextBox();
     }
@@ -287,16 +301,19 @@ if (!SpeechRecognition) {
       // if word limit reached, translate immediately and reset
       if (wordCount(pendingText) >= WORD_LIMIT) {
         interimEl.textContent = '';
+        updateDivider();
         flushTranslation(pendingText);
         return;
       }
 
       interimEl.textContent = pendingText;
+      updateDivider();
       showEars(true);
       schedulePauseTranslation(pendingText);
     } else if (interimTranscript) {
       const combined = (pendingText + ' ' + interimTranscript).trim();
       interimEl.textContent = combined;
+      updateDivider();
       showEars(true);
 
       // also trigger early if interim already hits word limit
