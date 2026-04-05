@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Translator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  #text-container {
+    max-width: 100%;
+    word-break: break-word;
+    line-height: 1.3;
+    transition: opacity 0.2s ease;
+  }
+
+  #translated-text {
+    display: block;
+  }
+
+  #interim-text {
+    display: block;
+    opacity: 0.6;
+  }
+
+  #status {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
+    font-family: monospace;
+    opacity: 0.5;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<div id="text-container">
+  <span id="translated-text"></span>
+  <span id="interim-text"></span>
+</div>
+<div id="status">starting...</div>
+
+<script>
+// ─── Read URL parameters ───────────────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+
+const recogLang  = params.get('recog')    || 'it';
+const transLang  = params.get('trans')    || 'es';
+const bgColor    = params.get('bgcolor')  || 'transparent';
+const fontSize   = params.get('size')     || '20';
+const fontWeight = params.get('weight')   || '800';
+const color      = params.get('color')    || 'white';
+const stColor    = params.get('st_color') || 'black';
+const stWidth    = params.get('st_width') || '2';
+const vAlign     = params.get('v_align')  || 'bottom';
+const gasKey     = params.get('gas_key')  || '';
+
+// ─── Apply styles from URL params ─────────────────────────────────────────
+document.body.style.background = bgColor === 'transparent' ? 'transparent' : bgColor;
+
+const container = document.getElementById('text-container');
+container.style.fontSize   = fontSize + 'pt';
+container.style.fontWeight = fontWeight;
+container.style.color      = color;
+
+// text stroke / outline using shadow
+const sw = parseInt(stWidth) || 0;
+if (sw > 0) {
+  container.style.textShadow = [
+    `-${sw}px -${sw}px 0 ${stColor}`,
+    ` ${sw}px -${sw}px 0 ${stColor}`,
+    `-${sw}px  ${sw}px 0 ${stColor}`,
+    ` ${sw}px  ${sw}px 0 ${stColor}`
+  ].join(', ');
+}
+
+// vertical alignment
+const va = vAlign.replace('_','');
+if (va === 'top') {
+  document.body.style.alignItems = 'flex-start';
+} else if (va === 'center') {
+  document.body.style.alignItems = 'center';
+} else {
+  document.body.style.alignItems = 'flex-end';
+}
+
+// ─── State ─────────────────────────────────────────────────────────────────
+const translatedEl = document.getElementById('translated-text');
+const interimEl    = document.getElementById('interim-text');
+const statusEl     = document.getElementById('status');
+
+let pauseTimer      = null;
+const PAUSE_MS      = 1500;   // how long silence before we translate (ms)
+let pendingText     = '';     // accumulated interim text waiting for pause
+let isTranslating   = false;
+
+// ─── Translation via your Google Apps Script ───────────────────────────────
+async function translate(text) {
+  if (!gasKey || !text.trim()) return;
+  isTranslating = true;
+  statusEl.textContent = 'translating...';
+  try {
+    const url = `https://script.google.com/macros/s/${gasKey}/exec`
+              + `?text=${encodeURIComponent(text)}`
+              + `&source=${recogLang}`
+              + `&target=${transLang}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.translatedText) {
+      translatedEl.textContent = data.translatedText;
+      interimEl.textContent    = '';
+    }
+  } catch (e) {
+    statusEl.textContent = 'translation error';
+  }
+  isTranslating = false;
+  statusEl.textContent = 'listening...';
+}
+
+// ─── Schedule a translation after silence ─────────────────────────────────
+function schedulePauseTranslation(text) {
+  clearTimeout(pauseTimer);
+  pauseTimer = setTimeout(() => {
+    if (text.trim()) {
+      translate(text);
+      pendingText = '';
+    }
+  }, PAUSE_MS);
+}
+
+// ─── Speech Recognition ───────────────────────────────────────────────────
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+  statusEl.textContent = 'Speech API not supported — use Chrome';
+} else {
+  const recog = new SpeechRecognition();
+  recog.lang              = recogLang;
+  recog.continuous        = true;
+  recog.interimResults    = true;
+  recog.maxAlternatives   = 1;
+
+  recog.onstart = () => {
+    statusEl.textContent = 'listening...';
+  };
+
+  recog.onresult = (event) => {
+    let interimTranscript = '';
+    let finalTranscript   = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+
+    if (finalTranscript) {
+      // A sentence was finalised — add to pending and reset the pause timer
+      pendingText += ' ' + finalTranscript;
+      pendingText = pendingText.trim();
+      interimEl.textContent = pendingText;
+      schedulePauseTranslation(pendingText);
+    } else if (interimTranscript) {
+      // Still talking — show raw interim text, reset pause timer
+      interimEl.textContent = pendingText + ' ' + interimTranscript;
+      schedulePauseTranslation(pendingText + ' ' + interimTranscript);
+    }
+  };
+
+  recog.onerror = (e) => {
+    statusEl.textContent = 'error: ' + e.error;
+    // restart on non-fatal errors
+    if (e.error !== 'not-allowed') {
+      setTimeout(() => recog.start(), 2000);
+    }
+  };
+
+  recog.onend = () => {
+    // auto-restart so it never stops listening
+    statusEl.textContent = 'restarting...';
+    setTimeout(() => recog.start(), 500);
+  };
+
+  recog.start();
+}
+</script>
+</body>
+</html>
