@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Translator</title>
+<title>Live Translator 🐰</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -18,40 +19,131 @@
     overflow: hidden;
   }
 
-  #text-container {
+  #wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  /* Bunny ears sitting above the text box */
+  #ears {
+    display: none;
+    position: absolute;
+    top: -42px;
+    left: 10px;
+    font-size: 2.2em;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(150,80,220,0.35));
+    animation: earWiggle 2.5s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+
+  @keyframes earWiggle {
+    0%, 100% { transform: rotate(-5deg) scale(1); }
+    25%       { transform: rotate(5deg) scale(1.05); }
+    75%       { transform: rotate(-3deg) scale(0.97); }
+  }
+
+  /* Floating paw prints around the box */
+  #paws {
+    display: none;
+    position: absolute;
+    inset: -18px;
+    pointer-events: none;
+  }
+  .paw {
+    position: absolute;
+    font-size: 1em;
+    opacity: 0;
+    animation: floatPaw 4s ease-in-out infinite;
+  }
+  .paw:nth-child(1) { top: -10px; right: 10px;  animation-delay: 0s;    font-size: 0.85em; }
+  .paw:nth-child(2) { bottom: -8px; left: 8px;  animation-delay: 1s;    font-size: 0.7em;  }
+  .paw:nth-child(3) { top: 30%;  right: -14px;  animation-delay: 2s;    font-size: 0.75em; }
+  .paw:nth-child(4) { bottom: 20%; left: -12px; animation-delay: 0.5s;  font-size: 0.8em;  }
+
+  @keyframes floatPaw {
+    0%   { opacity: 0;    transform: translateY(0)   rotate(0deg);   }
+    20%  { opacity: 0.75; }
+    60%  { opacity: 0.5;  transform: translateY(-8px) rotate(15deg); }
+    100% { opacity: 0;    transform: translateY(-14px) rotate(30deg);}
+  }
+
+  #text-box {
+    background: rgba(210, 180, 255, 0.85); /* lavender purple */
+    border: 3px solid #c49eff;
+    border-radius: 22px 22px 22px 5px;
+    padding: 12px 20px 12px 16px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 24px rgba(160, 100, 255, 0.3),
+                inset 0 1px 0 rgba(255,255,255,0.55);
     max-width: 100%;
     word-break: break-word;
-    line-height: 1.3;
-    transition: opacity 0.2s ease;
+    line-height: 1.4;
+    font-family: 'Baloo 2', 'Comic Sans MS', cursive;
+    font-weight: 800;
   }
 
   #translated-text {
     display: block;
+    color: #ecdeff; /* pastel purple / near-white with purple hue */
+    text-shadow:
+      -2px -2px 0 #7c3aed,
+       2px -2px 0 #7c3aed,
+      -2px  2px 0 #7c3aed,
+       2px  2px 0 #7c3aed,
+       0    3px 10px rgba(120,50,220,0.35);
   }
 
   #interim-text {
     display: block;
-    opacity: 0.6;
+    color: rgba(236, 222, 255, 0.6);
+    text-shadow:
+      -1px -1px 0 rgba(124,58,237,0.4),
+       1px -1px 0 rgba(124,58,237,0.4),
+      -1px  1px 0 rgba(124,58,237,0.4),
+       1px  1px 0 rgba(124,58,237,0.4);
+    font-style: italic;
+  }
+
+  #text-box.pop {
+    animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popIn {
+    0%   { transform: scale(0.93); }
+    100% { transform: scale(1); }
   }
 
   #status {
     position: fixed;
     top: 8px;
     right: 8px;
-    font-size: 12px;
-    font-family: monospace;
-    opacity: 0.5;
-    color: white;
+    font-size: 11px;
+    font-family: 'Baloo 2', cursive;
+    opacity: 0.6;
+    color: #7c3aed;
+    background: rgba(236,222,255,0.5);
+    padding: 2px 10px;
+    border-radius: 20px;
   }
 </style>
 </head>
 <body>
 
-<div id="text-container">
-  <span id="translated-text"></span>
-  <span id="interim-text"></span>
+<div id="wrapper">
+  <div id="ears">🐰</div>
+  <div id="paws">
+    <span class="paw">🐾</span>
+    <span class="paw">🐾</span>
+    <span class="paw">🐾</span>
+    <span class="paw">🐾</span>
+  </div>
+  <div id="text-box">
+    <span id="translated-text"></span>
+    <span id="interim-text"></span>
+  </div>
 </div>
-<div id="status">starting...</div>
+<div id="status">starting... 🌸</div>
 
 <script>
 // ─── Read URL parameters ───────────────────────────────────────────────────
@@ -69,23 +161,13 @@ const vAlign     = params.get('v_align')  || 'bottom';
 const gasKey     = params.get('gas_key')  || '';
 
 // ─── Apply styles from URL params ─────────────────────────────────────────
-document.body.style.background = bgColor === 'transparent' ? 'transparent' : bgColor;
-
-const container = document.getElementById('text-container');
-container.style.fontSize   = fontSize + 'pt';
-container.style.fontWeight = fontWeight;
-container.style.color      = color;
-
-// text stroke / outline using shadow
-const sw = parseInt(stWidth) || 0;
-if (sw > 0) {
-  container.style.textShadow = [
-    `-${sw}px -${sw}px 0 ${stColor}`,
-    ` ${sw}px -${sw}px 0 ${stColor}`,
-    `-${sw}px  ${sw}px 0 ${stColor}`,
-    ` ${sw}px  ${sw}px 0 ${stColor}`
-  ].join(', ');
+// Background: transparent in OBS, pink-ish in browser if not set
+if (bgColor && bgColor !== 'transparent') {
+  document.body.style.background = bgColor;
 }
+
+const textBox = document.getElementById('text-box');
+textBox.style.fontSize   = fontSize + 'pt';
 
 // vertical alignment
 const va = vAlign.replace('_','');
@@ -101,6 +183,21 @@ if (va === 'top') {
 const translatedEl = document.getElementById('translated-text');
 const interimEl    = document.getElementById('interim-text');
 const statusEl     = document.getElementById('status');
+const earsEl       = document.getElementById('ears');
+const wrapperEl    = document.getElementById('wrapper');
+
+const pawsEl       = document.getElementById('paws');
+
+function showEars(visible) {
+  earsEl.style.display = visible ? 'block' : 'none';
+  pawsEl.style.display = visible ? 'block' : 'none';
+}
+
+function popTextBox() {
+  textBox.classList.remove('pop');
+  void textBox.offsetWidth; // reflow to restart animation
+  textBox.classList.add('pop');
+}
 
 let pauseTimer      = null;
 const PAUSE_MS      = 1500;   // how long silence before we translate (ms)
@@ -111,7 +208,7 @@ let isTranslating   = false;
 async function translate(text) {
   if (!gasKey || !text.trim()) return;
   isTranslating = true;
-  statusEl.textContent = 'translating...';
+  statusEl.textContent = 'translating... 💕';
   try {
     const url = `https://script.google.com/macros/s/${gasKey}/exec`
               + `?text=${encodeURIComponent(text)}`
@@ -122,12 +219,14 @@ async function translate(text) {
     if (data.translatedText) {
       translatedEl.textContent = data.translatedText;
       interimEl.textContent    = '';
+      showEars(true);
+      popTextBox();
     }
   } catch (e) {
-    statusEl.textContent = 'translation error';
+    statusEl.textContent = 'error 🌸';
   }
   isTranslating = false;
-  statusEl.textContent = 'listening...';
+  statusEl.textContent = 'listening... 🐰';
 }
 
 // ─── Schedule a translation after silence ─────────────────────────────────
@@ -145,7 +244,7 @@ function schedulePauseTranslation(text) {
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-  statusEl.textContent = 'Speech API not supported — use Chrome';
+  statusEl.textContent = 'Speech API not supported — use Chrome 🌸';
 } else {
   const recog = new SpeechRecognition();
   recog.lang              = recogLang;
@@ -154,7 +253,7 @@ if (!SpeechRecognition) {
   recog.maxAlternatives   = 1;
 
   recog.onstart = () => {
-    statusEl.textContent = 'listening...';
+    statusEl.textContent = 'listening... 🐰';
   };
 
   recog.onresult = (event) => {
@@ -171,29 +270,27 @@ if (!SpeechRecognition) {
     }
 
     if (finalTranscript) {
-      // A sentence was finalised — add to pending and reset the pause timer
       pendingText += ' ' + finalTranscript;
       pendingText = pendingText.trim();
       interimEl.textContent = pendingText;
+      showEars(true);
       schedulePauseTranslation(pendingText);
     } else if (interimTranscript) {
-      // Still talking — show raw interim text, reset pause timer
       interimEl.textContent = pendingText + ' ' + interimTranscript;
+      showEars(true);
       schedulePauseTranslation(pendingText + ' ' + interimTranscript);
     }
   };
 
   recog.onerror = (e) => {
-    statusEl.textContent = 'error: ' + e.error;
-    // restart on non-fatal errors
+    statusEl.textContent = 'error: ' + e.error + ' 🌸';
     if (e.error !== 'not-allowed') {
       setTimeout(() => recog.start(), 2000);
     }
   };
 
   recog.onend = () => {
-    // auto-restart so it never stops listening
-    statusEl.textContent = 'restarting...';
+    statusEl.textContent = 'restarting... 🌸';
     setTimeout(() => recog.start(), 500);
   };
 
