@@ -212,21 +212,37 @@ function popTextBox() {
   textBox.classList.add('pop');
 }
 
-let pauseTimer      = null;
-const PAUSE_MS      = 800;    // silence delay before translating (ms)
-const WORD_LIMIT    = 17;     // translate automatically after this many words
-let pendingText     = '';     // accumulated final text waiting for pause
-let isTranslating   = false;
+const PAUSE_MS   = 800;  // silenzio prima di tradurre (ms)
+const WORD_LIMIT = 17;   // parole massime prima di tradurre in automatico
+
+let pendingText   = '';  // testo italiano accumulato
+let pauseTimer    = null;
+let busy          = false; // true mentre stiamo aspettando la risposta API
+let queuedText    = null;  // testo in attesa se busy=true
 
 function wordCount(text) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-// ─── Translation via your Google Apps Script ───────────────────────────────
-async function translate(text) {
+// ─── Mostra il testo italiano sotto ───────────────────────────────────────
+function setItalian(text) {
+  interimEl.textContent = text;
+  updateDivider();
+  if (text) showEars(true);
+}
+
+// ─── Chiamata API traduzione ───────────────────────────────────────────────
+async function doTranslate(text, recognizer) {
   if (!gasKey || !text.trim()) return;
-  isTranslating = true;
+  busy = true;
   statusEl.textContent = 'translating... 💕';
+
+  // Stoppa il riconoscimento vocale durante la traduzione
+  try { recognizer.stop(); } catch(e) {}
+
+  // Pulisci subito entrambe le righe
+  setItalian('');
+
   try {
     const url = `https://script.google.com/macros/s/${gasKey}/exec`
               + `?text=${encodeURIComponent(text)}`
@@ -236,32 +252,37 @@ async function translate(text) {
     const data = await res.json();
     if (data.translatedText) {
       translatedEl.textContent = data.translatedText;
-      interimEl.textContent    = '';
-      updateDivider();
+      dividerEl.style.display = 'none';
       showEars(true);
       popTextBox();
     }
   } catch (e) {
     statusEl.textContent = 'error 🌸';
   }
-  isTranslating = false;
+
+  // Reset completo dello stato
+  busy        = false;
+  pendingText = '';
+  queuedText  = null;
+
+  // Riavvia il riconoscimento vocale
   statusEl.textContent = 'listening... 🐰';
+  try { recognizer.start(); } catch(e) {}
 }
 
-// ─── Trigger translation and reset pending buffer ──────────────────────────
-function flushTranslation(text) {
+// ─── Avvia traduzione ─────────────────────────────────────────────────────
+function flush(text, recognizer) {
   clearTimeout(pauseTimer);
   pendingText = '';
-  translate(text);
+  setItalian('');
+  doTranslate(text, recognizer);
 }
 
-// ─── Schedule a translation after silence ─────────────────────────────────
-function schedulePauseTranslation(text) {
+// ─── Timer silenzio ───────────────────────────────────────────────────────
+function schedulePause(text, recognizer) {
   clearTimeout(pauseTimer);
   pauseTimer = setTimeout(() => {
-    if (text.trim()) {
-      flushTranslation(text);
-    }
+    if (text.trim()) flush(text, recognizer);
   }, PAUSE_MS);
 }
 
@@ -272,70 +293,60 @@ if (!SpeechRecognition) {
   statusEl.textContent = 'Speech API not supported — use Chrome 🌸';
 } else {
   const recog = new SpeechRecognition();
-  recog.lang              = recogLang;
-  recog.continuous        = true;
-  recog.interimResults    = true;
-  recog.maxAlternatives   = 1;
+  recog.lang            = recogLang;
+  recog.continuous      = true;
+  recog.interimResults  = true;
+  recog.maxAlternatives = 1;
 
-  recog.onstart = () => {
-    statusEl.textContent = 'listening... 🐰';
-  };
+  recog.onstart = () => { statusEl.textContent = 'listening... 🐰'; };
 
   recog.onresult = (event) => {
-    let interimTranscript = '';
+    // Ignora tutto mentre stiamo traducendo
+    if (busy) return;
+
     let finalTranscript   = '';
+    let interimTranscript = '';
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript;
-      } else {
-        interimTranscript += transcript;
-      }
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalTranscript   += t;
+      else                          interimTranscript += t;
     }
 
     if (finalTranscript) {
-      pendingText += ' ' + finalTranscript;
-      pendingText = pendingText.trim();
+      pendingText = (pendingText + ' ' + finalTranscript).trim();
 
-      // if word limit reached, translate immediately and reset
       if (wordCount(pendingText) >= WORD_LIMIT) {
-        interimEl.textContent = '';
-        updateDivider();
-        flushTranslation(pendingText);
-        return;
+        flush(pendingText, recog);
+      } else {
+        setItalian(pendingText);
+        schedulePause(pendingText, recog);
       }
 
-      interimEl.textContent = pendingText;
-      updateDivider();
-      showEars(true);
-      schedulePauseTranslation(pendingText);
     } else if (interimTranscript) {
       const combined = (pendingText + ' ' + interimTranscript).trim();
-      interimEl.textContent = combined;
-      updateDivider();
-      showEars(true);
 
-      // also trigger early if interim already hits word limit
       if (wordCount(combined) >= WORD_LIMIT) {
-        flushTranslation(combined);
-        return;
+        flush(combined, recog);
+      } else {
+        setItalian(combined);
+        schedulePause(combined, recog);
       }
-
-      schedulePauseTranslation(combined);
     }
   };
 
   recog.onerror = (e) => {
+    if (e.error === 'aborted') return; // normale quando fermiamo noi
     statusEl.textContent = 'error: ' + e.error + ' 🌸';
-    if (e.error !== 'not-allowed') {
-      setTimeout(() => recog.start(), 2000);
-    }
+    if (e.error !== 'not-allowed') setTimeout(() => recog.start(), 2000);
   };
 
   recog.onend = () => {
-    statusEl.textContent = 'restarting... 🌸';
-    setTimeout(() => recog.start(), 500);
+    // Riavvia automaticamente solo se NON stiamo noi traducendo
+    if (!busy) {
+      statusEl.textContent = 'restarting... 🌸';
+      setTimeout(() => recog.start(), 300);
+    }
   };
 
   recog.start();
