@@ -21,15 +21,11 @@
     font-weight: 800;
   }
 
-  #wrapper {
-    position: relative;
-    max-width: 100%;
-  }
+  #wrapper { position: relative; max-width: 100%; }
 
   #ears {
     position: absolute;
-    top: -40px;
-    left: 10px;
+    top: -40px; left: 10px;
     font-size: 2em;
     filter: drop-shadow(0 2px 6px rgba(150,80,220,0.4));
     animation: wiggle 2.5s ease-in-out infinite;
@@ -37,49 +33,39 @@
   }
   @keyframes wiggle {
     0%,100% { transform: rotate(-5deg); }
-    50%      { transform: rotate(5deg); }
+    50%     { transform: rotate(5deg);  }
   }
 
-  #paws {
-    position: absolute;
-    inset: -16px;
-    pointer-events: none;
-  }
-  .paw {
-    position: absolute;
-    font-size: 0.8em;
-    opacity: 0;
-    animation: floatup 4s ease-in-out infinite;
-  }
-  .paw:nth-child(1) { top: -8px;    right: 12px;  animation-delay: 0s;   }
-  .paw:nth-child(2) { bottom: -6px; left: 10px;   animation-delay: 1.3s; }
-  .paw:nth-child(3) { top: 40%;    right: -12px;  animation-delay: 2.6s; }
-  .paw:nth-child(4) { bottom: 30%; left: -10px;   animation-delay: 0.7s; }
+  #paws { position: absolute; inset: -16px; pointer-events: none; }
+  .paw  { position: absolute; font-size: 0.8em; opacity: 0; animation: floatup 4s ease-in-out infinite; }
+  .paw:nth-child(1) { top:-8px;    right:12px;  animation-delay:0s;   }
+  .paw:nth-child(2) { bottom:-6px; left:10px;   animation-delay:1.3s; }
+  .paw:nth-child(3) { top:40%;    right:-12px;  animation-delay:2.6s; }
+  .paw:nth-child(4) { bottom:30%; left:-10px;   animation-delay:0.7s; }
   @keyframes floatup {
-    0%   { opacity: 0;   transform: translateY(0) rotate(0deg);      }
-    30%  { opacity: 0.7; }
-    100% { opacity: 0;   transform: translateY(-16px) rotate(25deg); }
+    0%   { opacity:0;   transform:translateY(0) rotate(0deg);      }
+    30%  { opacity:0.7; }
+    100% { opacity:0;   transform:translateY(-16px) rotate(25deg); }
   }
 
   #box {
-    background: rgba(210, 180, 255, 0.88);
+    background: rgba(210,180,255,0.88);
     border: 3px solid #c49eff;
     border-radius: 22px 22px 22px 5px;
     padding: 12px 20px;
     backdrop-filter: blur(6px);
-    box-shadow: 0 4px 24px rgba(160,100,255,0.3),
-                inset 0 1px 0 rgba(255,255,255,0.5);
+    box-shadow: 0 4px 24px rgba(160,100,255,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
     max-width: 100%;
     word-break: break-word;
     line-height: 1.45;
   }
 
+  /* Spanish line — bright */
   #line-es {
     display: block;
     color: #ecdeff;
-    text-shadow:
-      -2px -2px 0 #7c3aed,  2px -2px 0 #7c3aed,
-      -2px  2px 0 #7c3aed,  2px  2px 0 #7c3aed;
+    text-shadow: -2px -2px 0 #7c3aed, 2px -2px 0 #7c3aed,
+                 -2px  2px 0 #7c3aed, 2px  2px 0 #7c3aed;
   }
 
   #divider {
@@ -89,28 +75,23 @@
     display: none;
   }
 
+  /* Italian line — dim italic */
   #line-it {
     display: block;
     color: rgba(236,222,255,0.55);
     font-style: italic;
-    text-shadow:
-      -1px -1px 0 rgba(124,58,237,0.35),  1px -1px 0 rgba(124,58,237,0.35),
-      -1px  1px 0 rgba(124,58,237,0.35),  1px  1px 0 rgba(124,58,237,0.35);
+    text-shadow: -1px -1px 0 rgba(124,58,237,0.35), 1px -1px 0 rgba(124,58,237,0.35),
+                 -1px  1px 0 rgba(124,58,237,0.35), 1px  1px 0 rgba(124,58,237,0.35);
   }
 
   #box.pop { animation: popin 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-  @keyframes popin { from { transform: scale(0.94); } to { transform: scale(1); } }
+  @keyframes popin { from { transform:scale(0.94); } to { transform:scale(1); } }
 
   #status {
-    position: fixed;
-    top: 8px; right: 10px;
-    font-family: 'Baloo 2', cursive;
-    font-size: 11px;
-    color: #7c3aed;
-    background: rgba(236,222,255,0.55);
-    padding: 2px 10px;
-    border-radius: 20px;
-    opacity: 0.65;
+    position: fixed; top:8px; right:10px;
+    font-family: 'Baloo 2', cursive; font-size:11px;
+    color:#7c3aed; background:rgba(236,222,255,0.55);
+    padding:2px 10px; border-radius:20px; opacity:0.65;
   }
 </style>
 </head>
@@ -119,10 +100,8 @@
 <div id="wrapper">
   <div id="ears">🐰</div>
   <div id="paws">
-    <span class="paw">🐾</span>
-    <span class="paw">🐾</span>
-    <span class="paw">🐾</span>
-    <span class="paw">🐾</span>
+    <span class="paw">🐾</span><span class="paw">🐾</span>
+    <span class="paw">🐾</span><span class="paw">🐾</span>
   </div>
   <div id="box">
     <span id="line-es"></span>
@@ -135,11 +114,11 @@
 <script>
 // ── URL params ──────────────────────────────────────────────────────────────
 const p       = new URLSearchParams(location.search);
-const RECOG   = p.get('recog')    || 'it';
-const TRANS   = p.get('trans')    || 'es';
-const BGCOLOR = p.get('bgcolor')  || 'transparent';
-const SIZE    = p.get('size')     || '20';
-const VALIGN  = (p.get('v_align') || 'bottom').replace('_', '');
+const RECOG   = p.get('recog')   || 'it';
+const TRANS   = p.get('trans')   || 'es';
+const BGCOLOR = p.get('bgcolor') || 'transparent';
+const SIZE    = p.get('size')    || '20';
+const VALIGN  = (p.get('v_align') || 'bottom').replace('_','');
 const GAS_KEY = p.get('gas_key') || '';
 
 // ── Apply styles ────────────────────────────────────────────────────────────
@@ -160,23 +139,20 @@ const WORD_LIMIT = 17;
 const PAUSE_MS   = 900;
 
 // ── State ───────────────────────────────────────────────────────────────────
-let buffer      = '';     // confirmed Italian words not yet translated
-let pauseTimer  = null;
-let translating = false;
+let buffer     = '';    // confirmed words not yet sent to translate
+let pauseTimer = null;
 
-// ── UI helpers ───────────────────────────────────────────────────────────────
-function wordCount(t) {
-  return t.trim().split(/\s+/).filter(Boolean).length;
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function wordCount(t) { return t.trim().split(/\s+/).filter(Boolean).length; }
+
+function syncDivider() {
+  elDiv.style.display = (elEs.textContent && elIt.textContent) ? 'block' : 'none';
 }
 
-function showIT(text) {
-  elIt.textContent    = text;
-  elDiv.style.display = (elEs.textContent && text) ? 'block' : 'none';
-}
-
-function showES(text) {
-  elEs.textContent    = text;
-  elDiv.style.display = (text && elIt.textContent) ? 'block' : 'none';
+function setIT(text) { elIt.textContent = text; syncDivider(); }
+function setES(text) {
+  elEs.textContent = text;
+  syncDivider();
   if (text) {
     elBox.classList.remove('pop');
     void elBox.offsetWidth;
@@ -184,59 +160,42 @@ function showES(text) {
   }
 }
 
-// ── Translation ──────────────────────────────────────────────────────────────
-// Simple queue: if a translation is already running, the new request
-// will simply overwrite the queued one — only the latest matters.
-let queued = null;
+// ── Translation — fully async, NEVER blocks the mic ─────────────────────────
+// We use a simple "last write wins" approach:
+// sendTranslation() fires off a fetch and when it comes back it writes the result.
+// Multiple calls can be in-flight; whichever finishes last wins (that's fine —
+// they're sequential chunks so the latest is always the most recent).
 
-async function runTranslate(text) {
-  translating = true;
-  clearTimeout(pauseTimer);
-  buffer = '';
-  showIT('');
+async function sendTranslation(text) {
+  if (!GAS_KEY || !text.trim()) return;
   elStatus.textContent = 'traducendo... 💕';
-
+  // Clear spanish immediately so old text doesn't linger
+  setES('');
   try {
     const url = `https://script.google.com/macros/s/${GAS_KEY}/exec`
               + `?text=${encodeURIComponent(text)}`
               + `&source=${RECOG}&target=${TRANS}`;
     const r = await fetch(url);
     const d = await r.json();
-    if (d.translatedText) showES(d.translatedText);
-  } catch (_) {
-    elStatus.textContent = 'errore 🌸';
-  }
-
-  translating = false;
+    if (d.translatedText) setES(d.translatedText);
+  } catch (_) { /* silent fail */ }
   elStatus.textContent = 'ascolto... 🐰';
-
-  // If something came in while we were busy, translate it now
-  if (queued) {
-    const next = queued;
-    queued = null;
-    runTranslate(next);
-  }
 }
 
-function requestTranslate(text) {
-  if (!GAS_KEY || !text.trim()) return;
+// ── Called when we want to translate the current buffer ─────────────────────
+function flushBuffer(textToTranslate) {
   clearTimeout(pauseTimer);
-  if (translating) {
-    // save for after current translation finishes
-    queued = text;
-    buffer = '';
-    showIT(''); // clear italian immediately so nothing accumulates visually
-  } else {
-    runTranslate(text);
-  }
+  buffer = '';          // reset buffer immediately so new words start fresh
+  setIT('');            // clear italian immediately
+  sendTranslation(textToTranslate); // fire & forget — mic keeps running
 }
 
 function schedulePause(text) {
   clearTimeout(pauseTimer);
-  pauseTimer = setTimeout(() => requestTranslate(text), PAUSE_MS);
+  pauseTimer = setTimeout(() => flushBuffer(text), PAUSE_MS);
 }
 
-// ── Speech Recognition ────────────────────────────────────────────────────────
+// ── Speech Recognition — always running ──────────────────────────────────────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SR) {
@@ -258,42 +217,38 @@ if (!SR) {
       else                      interim += t;
     }
 
-    // ── Final words confirmed by browser ──
+    // ── Confirmed words → add to buffer ──────────────────────────────────
     if (final) {
       buffer = (buffer + ' ' + final).trim();
 
       if (wordCount(buffer) >= WORD_LIMIT) {
-        requestTranslate(buffer);
+        // Hit the limit → translate & reset immediately, mic keeps going
+        flushBuffer(buffer);
       } else {
-        showIT(buffer);
+        setIT(buffer);
         schedulePause(buffer);
       }
     }
 
-    // ── Interim: show live preview, don't add to buffer ──
-    if (interim && !translating) {
+    // ── Live preview (not confirmed yet) ─────────────────────────────────
+    if (interim) {
       const preview = (buffer + ' ' + interim).trim();
-      showIT(preview);
-
-      if (wordCount(preview) >= WORD_LIMIT) {
-        requestTranslate(preview);
-      } else {
-        schedulePause(preview);
-      }
+      setIT(preview);
+      // if preview already hits limit, schedule translate on confirmed words
+      // (we don't flush on interim to avoid cutting mid-word)
     }
   };
 
   rec.onerror = (e) => {
     if (e.error === 'no-speech' || e.error === 'aborted') return;
-    elStatus.textContent = 'errore: ' + e.error;
     if (e.error !== 'not-allowed') {
-      setTimeout(() => { try { rec.start(); } catch (_) {} }, 2000);
+      setTimeout(() => { try { rec.start(); } catch(_){} }, 1500);
     }
   };
 
+  // Always restart — this is the key to never stopping
   rec.onend = () => {
-    // Always keep listening — restart immediately
-    setTimeout(() => { try { rec.start(); } catch (_) {} }, 300);
+    setTimeout(() => { try { rec.start(); } catch(_){} }, 200);
   };
 
   rec.start();
