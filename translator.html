@@ -86,20 +86,13 @@
 
   #translated-text {
     display: block;
-    color: #ecdeff;
+    color: #ecdeff; /* pastel purple / near-white with purple hue */
     text-shadow:
       -2px -2px 0 #7c3aed,
        2px -2px 0 #7c3aed,
       -2px  2px 0 #7c3aed,
        2px  2px 0 #7c3aed,
        0    3px 10px rgba(120,50,220,0.35);
-  }
-
-  #divider {
-    display: none;
-    border: none;
-    border-top: 1.5px solid rgba(200,170,255,0.45);
-    margin: 6px 0;
   }
 
   #interim-text {
@@ -147,7 +140,6 @@
   </div>
   <div id="text-box">
     <span id="translated-text"></span>
-    <hr id="divider">
     <span id="interim-text"></span>
   </div>
 </div>
@@ -190,20 +182,15 @@ if (va === 'top') {
 // ─── State ─────────────────────────────────────────────────────────────────
 const translatedEl = document.getElementById('translated-text');
 const interimEl    = document.getElementById('interim-text');
-const dividerEl    = document.getElementById('divider');
 const statusEl     = document.getElementById('status');
 const earsEl       = document.getElementById('ears');
 const wrapperEl    = document.getElementById('wrapper');
+
 const pawsEl       = document.getElementById('paws');
 
 function showEars(visible) {
   earsEl.style.display = visible ? 'block' : 'none';
   pawsEl.style.display = visible ? 'block' : 'none';
-}
-
-function updateDivider() {
-  const hasBoth = translatedEl.textContent.trim() && interimEl.textContent.trim();
-  dividerEl.style.display = hasBoth ? 'block' : 'none';
 }
 
 function popTextBox() {
@@ -212,34 +199,16 @@ function popTextBox() {
   textBox.classList.add('pop');
 }
 
-const PAUSE_MS   = 800;  // silenzio prima di tradurre (ms)
-const WORD_LIMIT = 17;   // parole massime prima di tradurre in automatico
+let pauseTimer      = null;
+const PAUSE_MS      = 1500;   // how long silence before we translate (ms)
+let pendingText     = '';     // accumulated interim text waiting for pause
+let isTranslating   = false;
 
-let pendingText   = '';  // testo italiano accumulato
-let pauseTimer    = null;
-let busy          = false; // true mentre stiamo aspettando la risposta API
-let queuedText    = null;  // testo in attesa se busy=true
-
-function wordCount(text) {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
-
-// ─── Mostra il testo italiano sotto ───────────────────────────────────────
-function setItalian(text) {
-  interimEl.textContent = text;
-  updateDivider();
-  if (text) showEars(true);
-}
-
-// ─── Chiamata API traduzione ───────────────────────────────────────────────
-async function doTranslate(text) {
+// ─── Translation via your Google Apps Script ───────────────────────────────
+async function translate(text) {
   if (!gasKey || !text.trim()) return;
-  busy = true;
+  isTranslating = true;
   statusEl.textContent = 'translating... 💕';
-
-  // Pulisci subito l'italiano e mostra "..." come placeholder
-  setItalian('');
-
   try {
     const url = `https://script.google.com/macros/s/${gasKey}/exec`
               + `?text=${encodeURIComponent(text)}`
@@ -249,44 +218,25 @@ async function doTranslate(text) {
     const data = await res.json();
     if (data.translatedText) {
       translatedEl.textContent = data.translatedText;
-      updateDivider();
+      interimEl.textContent    = '';
       showEars(true);
       popTextBox();
     }
   } catch (e) {
     statusEl.textContent = 'error 🌸';
   }
-
-  busy = false;
+  isTranslating = false;
   statusEl.textContent = 'listening... 🐰';
-
-  // Se nel frattempo è arrivato altro testo, traducilo ora
-  if (queuedText) {
-    const toTranslate = queuedText;
-    queuedText = null;
-    pendingText = '';
-    setItalian('');
-    doTranslate(toTranslate);
-  }
 }
 
-// ─── Avvia traduzione (gestisce busy) ─────────────────────────────────────
-function flush(text) {
-  clearTimeout(pauseTimer);
-  pendingText = '';
-  if (busy) {
-    // già traducendo: salva in coda, verrà tradotto appena finisce
-    queuedText = text;
-  } else {
-    doTranslate(text);
-  }
-}
-
-// ─── Timer silenzio ───────────────────────────────────────────────────────
-function schedulePause(text) {
+// ─── Schedule a translation after silence ─────────────────────────────────
+function schedulePauseTranslation(text) {
   clearTimeout(pauseTimer);
   pauseTimer = setTimeout(() => {
-    if (text.trim()) flush(text);
+    if (text.trim()) {
+      translate(text);
+      pendingText = '';
+    }
   }, PAUSE_MS);
 }
 
@@ -297,53 +247,46 @@ if (!SpeechRecognition) {
   statusEl.textContent = 'Speech API not supported — use Chrome 🌸';
 } else {
   const recog = new SpeechRecognition();
-  recog.lang            = recogLang;
-  recog.continuous      = true;
-  recog.interimResults  = true;
-  recog.maxAlternatives = 1;
+  recog.lang              = recogLang;
+  recog.continuous        = true;
+  recog.interimResults    = true;
+  recog.maxAlternatives   = 1;
 
-  recog.onstart = () => { statusEl.textContent = 'listening... 🐰'; };
+  recog.onstart = () => {
+    statusEl.textContent = 'listening... 🐰';
+  };
 
   recog.onresult = (event) => {
-    // Se stiamo già traducendo, ignora input intermedi
-    if (busy) return;
-
-    let finalTranscript   = '';
     let interimTranscript = '';
+    let finalTranscript   = '';
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const t = event.results[i][0].transcript;
-      if (event.results[i].isFinal) finalTranscript   += t;
-      else                          interimTranscript += t;
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interimTranscript += transcript;
+      }
     }
 
     if (finalTranscript) {
-      pendingText = (pendingText + ' ' + finalTranscript).trim();
-
-      if (wordCount(pendingText) >= WORD_LIMIT) {
-        // Limite raggiunto → traduci subito
-        flush(pendingText);
-      } else {
-        setItalian(pendingText);
-        schedulePause(pendingText);
-      }
-
+      pendingText += ' ' + finalTranscript;
+      pendingText = pendingText.trim();
+      interimEl.textContent = pendingText;
+      showEars(true);
+      schedulePauseTranslation(pendingText);
     } else if (interimTranscript) {
-      const combined = (pendingText + ' ' + interimTranscript).trim();
-
-      if (wordCount(combined) >= WORD_LIMIT) {
-        // Limite raggiunto anche con interim → traduci subito
-        flush(combined);
-      } else {
-        setItalian(combined);
-        schedulePause(combined);
-      }
+      interimEl.textContent = pendingText + ' ' + interimTranscript;
+      showEars(true);
+      schedulePauseTranslation(pendingText + ' ' + interimTranscript);
     }
   };
 
   recog.onerror = (e) => {
     statusEl.textContent = 'error: ' + e.error + ' 🌸';
-    if (e.error !== 'not-allowed') setTimeout(() => recog.start(), 2000);
+    if (e.error !== 'not-allowed') {
+      setTimeout(() => recog.start(), 2000);
+    }
   };
 
   recog.onend = () => {
